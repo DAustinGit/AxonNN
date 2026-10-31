@@ -3,6 +3,8 @@ from sklearn.model_selection import train_test_split
 import cupy as np
 import Axon as ax
 import matplotlib.pyplot as plt
+
+
 test_prediction = []
 
 df = pd.read_csv('mol_properties.csv')
@@ -37,17 +39,25 @@ Y_test_scaled = Y_test/y_max_test
 
 
 
-dict = [{"activation_function":"RelU", "hidden_features":12},
-        {"activation_function":"RelU", "hidden_features":12},
-        {"activation_function":"RelU", "hidden_features":12},
+dict = [{"activation_function":"RelU", "hidden_features":48},
+        {"activation_function":"RelU", "hidden_features":48},
+        {"activation_function":"RelU", "hidden_features":48},
+        {"activation_function":"RelU", "hidden_features":48},
+        {"activation_function":"RelU", "hidden_features":48},
+        {"activation_function":"RelU", "hidden_features":48},
+        {"activation_function":"RelU", "hidden_features":48},
+        {"activation_function":"linear", "hidden_features":48},
+
+
         ]
 
 
-pipeline = ax.model(model = dict, input_features=8, output_features=1)
+pipeline = ax.model(model = dict, input_features=8, output_features=1, learning_rate=0.0001, regularisation=None, batch_size=15, lambda_param = 0.01)
+                
 print("training model...")
 Y_train = Y_train.reshape(-1, 1)
 Y_test = Y_test.reshape(-1, 1)
-pipeline.train(x=x_train_scaled, y=Y_train, epochs=1)
+pipeline.train(x=x_train_scaled, y=Y_train, epochs=400)
 
 
 rows_test,_=x_test_scaled.shape
@@ -70,9 +80,9 @@ def r2(predY, expY):
 
 
 
-'''for i in range (rows_test):
+for i in range (rows_test):
   test_pred = pipeline.predict (x_test_scaled[i:i+1])
-  print (f" predicted test y: {test_pred} label: {Y_test[i]}")
+  #print (f" predicted test y: {test_pred} label: {Y_test[i]}")
   test_prediction.append(float(test_pred[0,0]))
 
 
@@ -80,7 +90,7 @@ rows,_=x_train_scaled.shape
 train_prediction = []
 for i in range (rows_train):
   train_pred = pipeline.predict (x_train_scaled[i:i+1])
-  print (f" predicted train y: {train_pred} label: {Y_train[i]}")
+  #print (f" predicted train y: {train_pred} label: {Y_train[i]}")
   train_prediction.append(float(train_pred[0,0]))
 
 
@@ -128,4 +138,4 @@ print(f"R2 difference = {R2_train-R2_test}")
 plt.tight_layout()
 plt.show()
 
-pipeline.dump()'''
+#pipeline.dump()
