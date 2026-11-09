@@ -1,0 +1,42 @@
+[
+    {
+        "activation_function": "ReLU",
+        "hidden_features": 13
+    },
+    {
+        "activation_function": "ReLU",
+        "hidden_features": 13
+    },
+    {
+        "activation_function": "ReLU",
+        "hidden_features": 11
+    },
+    {
+        "activation_function": "ReLU",
+        "hidden_features": 11
+    },
+    {
+        "activation_function": "ReLU",
+        "hidden_features": 11
+    },
+    {
+        "activation_function": "ReLU",
+        "hidden_features": 11
+    },
+    {
+        "activation_function": "ReLU",
+        "hidden_features": 11
+    },
+    {
+        "activation_function": "ReLU",
+        "hidden_features": 11
+    },
+    {
+        "activation_function": "ReLU",
+        "hidden_features": 11
+    },
+    {
+        "activation_function": "linear",
+        "hidden_features": 1
+    }
+]

@@ -1,0 +1,26 @@
+[
+    {
+        "activation_function": "GELU",
+        "hidden_features": 20
+    },
+    {
+        "activation_function": "GELU",
+        "hidden_features": 20
+    },
+    {
+        "activation_function": "GELU",
+        "hidden_features": 20
+    },
+    {
+        "activation_function": "GELU",
+        "hidden_features": 20
+    },
+    {
+        "activation_function": "GELU",
+        "hidden_features": 20
+    },
+    {
+        "activation_function": "linear",
+        "hidden_features": 1
+    }
+]

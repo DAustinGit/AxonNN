@@ -1,0 +1,18 @@
+[
+    {
+        "activation_function": "ReLU",
+        "hidden_features": 32
+    },
+    {
+        "activation_function": "ReLU",
+        "hidden_features": 64
+    },
+    {
+        "activation_function": "ReLU",
+        "hidden_features": 64
+    },
+    {
+        "activation_function": "linear",
+        "hidden_features": 1
+    }
+]
