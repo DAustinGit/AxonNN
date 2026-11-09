@@ -1,150 +1,168 @@
 
 #import numpy as np
 import cupy as cp
-import pandas as pd
+import copy
 rng = cp.random.default_rng()
 max_itterations = 400
-from typing import Any
-
-
-
-
 class network_layer:
-  def __init__(self, m:int, n:int,output_features:int=1,regularisation:str=None, biases_init:str="rand", Bvals:int=1, Wvals:int=1, weights_init:str="rand",  activation:str = "ReLu", lambda_param:float = 0.00001, stage:str="hidden"):
+  def __init__(self, parent_instance, m:int, n:int, activation:str = "ReLu", stage:str="hidden"):
+    self.parent_model = parent_instance 
     rng = cp.random.default_rng()
     self.m = m
     self.n = n
     self.stage = stage
     if stage == "output":
-      self.biases_n = output_features
+          self.biases=cp.zeros((1, self.parent_model.output_features))
     else:
-      self.biases_n = n
+      self.biases_n = self.n
+      if self.parent_model.biases_init == "rand":
+        self.biases=rng.uniform(-0.2,0.2, size =(1, self.biases_n))
+      elif self.parent_model.biases_init == "fill":
+        self.biases=cp.full((1, self.biases_n), self.parent_model.Bvals)
 
-    if biases_init == "rand":
-      self.biases=rng.uniform(-0.1,0.1, size =(1, self.biases_n))
-    if biases_init == "fill":
-      self.biases=cp.full(Bvals,Bvals, size =(1, self.biases_n))
-    if weights_init == "rand":
-      self.weights=rng.standard_normal(size=(self.m, self.n)) * cp.sqrt(2.0 / m)
-    if weights_init =="fill":
-      self.weights = cp.full(Wvals,Wvals, size =(self.m, self.n))
-    self.lambda_param = lambda_param
+    try:  
+      if self.parent_model.weights_init == "He":
+        self.weights=rng.standard_normal(size=(self.m, self.n)) * cp.sqrt(2.0 / self.m)
+      elif self.parent_model.weights_init == "Xavier":
+        self.weights=rng.standard_normal(size=(self.m, self.n)) * cp.sqrt(2.0 / (self.m+self.n))
+      elif self.parent_model.weights_init =="fill":
+        self.weights = cp.full((self.m, self.n), self.parent_model.Wvals)
+    except Exception as e:
+      print ("weights_init must be one of He, Xavier or fill")      
+
     self.output = cp.array([[]])
     self.input = cp.array([[]])
-    self.regularisation = regularisation
     self.activation = activation
     self.activation_functions = {
-      "RelU":{"forwards":self.reLu_forwards, "back_propergation":self.relu_backpropergation},
+      "ReLU":{"forwards":self.reLu_forwards, "back_propergation":self.relu_backpropergation},
       "tanh":{"forwards":self.tanh_forwards, "back_propergation":self.tanh_backpropergation},
-      "linear":{"forwards":self.linear_forwards, "back_propergation":self.linear_backpropergation}
-    }
+      "linear":{"forwards":self.linear_forwards, "back_propergation":self.linear_backpropergation},
+      "GELU":{"forwards":self.GELU_forwards, "back_propergation":self.GELU_backpropergation},
+      "Softmax":{"forwards":self.soft_max, "back_propergation":self.linear_backpropergation}
 
-    #print (f"{self.stage} layer with output function {self.activation}, m = {self.m}, n = {self.n}, biases initialisastion {biases_init}, weights initialisation {weights_init} regularisation {regularisation}")
+    }
+    
     self.activation_func = self.activation_functions[self.activation]["forwards"]
     self.back_prop = self.activation_functions[self.activation]["back_propergation"]
-    if regularisation == "L1":
+    print (f"stage {stage} activation = {self.activation_func}, back = {self.back_prop }")
+    if self.parent_model.regularisation == "L1":
       self.L = 1
-    elif regularisation =="L2":
+      self.bp_type = self.L1_back_prop
+    elif self.parent_model.regularisation =="L2":
       self.L = 2
+      self.bp_type = self.L2_back_prop
     else:
       self.L = 0
-  def reLu_forwards(self, input)->cp.array:
-    #print (f"shape of activation input {input.shape}")
-    A = cp.maximum(0, input)
-    #print (f"shape of A {A.shape}")
+      self.bp_type = self.std_back_prop
+  def reLu_forwards(self,)->cp.ndarray:
+    A = cp.maximum(0, self.linear_output)
     return  A
-  def relu_backpropergation(self,input)->cp.array:
-    #print(f"m = {self.m}")
-    #print(f"n = {self.n}") 
-    return cp.where(input > 0, 1, 0)
-  def tanh_forwards(self, input)->cp.array:
-    return cp.tanh(input)
-  def tanh_backpropergation(self, input)->cp.array:
-    return  1 - cp.power(self, input, 2)
-  def linear_forwards(self, input)->cp.array:
-    return input
-  def linear_backpropergation(self, input)->cp.array:
-    return  cp.ones_like(input)
+  def relu_backpropergation(self)->cp.ndarray:
+    return cp.where(self.linear_output > 0, 1, 0)
+  def tanh_forwards(self)->cp.ndarray:
+    return cp.tanh(self.linear_output)
+  def tanh_backpropergation(self)->cp.ndarray:
+    return  1 - cp.power(self.linear_output, 2)
+  def linear_forwards(self)->cp.ndarray:
+    return self.linear_output
+  def linear_backpropergation(self)->cp.ndarray:
+    return  cp.ones_like(self.linear_output)
+  def GELU_forwards(self)->cp.ndarray:
+    u = cp.sqrt(2/cp.pi)*(self.linear_output+0.044715*(self.linear_output**3))
+    u = cp.clip(u, -10.0, 10.0)
+    return 0.5*self.linear_output*(1+cp.tanh(u))
+  def GELU_backpropergation(self):
+    u = cp.sqrt(2/cp.pi)*(self.linear_output+0.044715*(self.linear_output**3))
+    dudx = cp.sqrt(2/cp.pi)*(1+0.134145*self.linear_output**2)
+    return 0.5*(1+cp.tanh(u))+(0.5*self.linear_output)*((1-cp.tanh(u)**2)*dudx)
+  def soft_max(self):
+    ex = cp.exp(self.linear_output-cp.max(self.linear_outputs))
+    return ex/cp.sum(ex)
+
+
+
+
 
 
   
   def forward (self, input):
     self.input = cp.array(input)
-    #print (f"shape of input{self.input.shape}, shape of weights{self.weights.shape}")
-    #print (f"shape of biases{self.biases.shape}")
-
-    self.linear_output = cp.dot(self.input, self.weights) + self.biases                                          
-    self.output = self.activation_func(self.linear_output)   
-    self.weights_regularisation = cp.sum(self.weights**self.L)              
-    #print (f"shape of output{self.output.shape}")
-    #print (f"shape of linear output{self.linear_output.shape}")
-
-    return (self.output)
+    self.linear_output = cp.dot(self.input, self.weights) + self.biases
+    #self.weights_sum = cp.sum(cp.abs(self.weights))                                              
+    return self.activation_func()
   
-  def back_propergation (self, learning_rate:float, upstream_gradient:cp.array):
-    self.deriv = self.back_prop(self.linear_output)
+  def L2_back_prop(self):
+    return self.dW_base + 2*(self.parent_model.lambda_param*self.weights)
+  def L1_back_prop(self):
+    return self.dW_base + self.parent_model.lambda_param*cp.sign(self.weights)
+  def std_back_prop(self):
+    return self.dW_base
   
+  def back_propergation (self, upstream_gradient:cp.ndarray)->cp.ndarray:
+    self.deriv = self.back_prop()
     self.delta = upstream_gradient * self.deriv 
-    #print (f"{self.stage} self.linear output = {self.linear_output.shape}self.deriv = {self.deriv.shape} self.input.T. shape: {self.input.T.shape}, delta shape: {self.delta.shape}")
-    dW_base = cp.dot(self.input.T, self.delta)
-    if self.regularisation == None:
-      dW_total = dW_base
-    elif self.regularisation == "L1":
-      dW_total = dW_base + self.lambda_param * 2 * cp.sign(sum(self.weights))
-    elif self.regularisation == "L2":
-      dW_total = dW_base + 2*(self.lambda_param*cp.sum(self.weights))
-    onward_gradient = cp.dot(self.delta, self.weights.T)
-    self.weights = self.weights-(learning_rate*dW_total)
-    self.biases = self.biases-(learning_rate*cp.sum(self.delta, axis=0, keepdims=True))      
-    return onward_gradient
+    self.dW_base = cp.dot(self.input.T, self.delta)
+    dW_total = self.bp_type()
+    down_streem_gradient = cp.dot(self.delta, self.weights.T)
+    self.weights = self.weights-(self.parent_model.learning_rate*dW_total)
+    self.biases = self.biases-(self.parent_model.learning_rate*cp.sum(self.delta, axis=0, keepdims=True))      
+    return down_streem_gradient
 
 
-class regressor:
-  def __init__(self, n_layers:int, batch_size:int, layers_dict:list[dict:any], regularisation:str=None):
-    self.layers_dict=layers_dict
-    self.n_layers = n_layers
-    
-    self.batch_size = batch_size
-    if regularisation == None:
-      self.reg = self.std_loss
-    elif regularisation == "L1" or "L2":
-      self.reg = self.regularisation_loss
-
-    
-  def regularisation_loss(self):
-    layer_weights_sum = 0
-    for i in range (self.n_layers):
-      layer_weights_sum += self.layers_dict[i]["layer_obj"].L
-    return self.loss_gradient+(self.L_lambda*layer_weights_sum )
-  def std_loss(self):
-    return self.loss_gradient
-  def loss(self, y:cp.array, y_pred:cp.array):
+class loss_function:
+  def __init__(self, parent_instance):
+      self.parent_model = parent_instance
+  def mean_squared(self, y:cp.ndarray, y_pred:cp.ndarray):
     y = cp.asarray(y)
-    self.loss_gradient = 2*(y_pred-y)/self.batch_size
-    batch_MSE = cp.mean((y_pred-y)**2)
-    return self.reg()
+    m,_ = y.shape
+    self.loss_gradient = 2*(y_pred-y)/m
+    self.parent_model.sum_abselute_error += cp.sum((y_pred-y)**2)
+    return self.loss_gradient
+
+  def binary_cross_entropy(self, y:cp.ndarray, y_pred:cp.ndarray):
+    m,_ = y.shape
+    epsilon = 1e-15
+    y_pred = cp.clip(y_pred, epsilon, 1.0 - epsilon)
+    bce_loss = -(y* cp.log(y_pred)+(1-y)*cp.log(1-y_pred))
+    return ((y_pred - y) / (y_pred * (1 - y_pred))*m)  #derivative sent back to output layer
+
+  def multiclass_cross_entropy (self, y:cp.ndarray, y_pred:cp.ndarray):
+    m,_ = y.shape
+    epsilon = 1e-15
+    y_pred = cp.clip(y_pred, epsilon, 1.0 - epsilon)
+    mce_loss = -(cp.sum(y*cp.log(y_pred), axis=1))
+    return (y_pred-y)/m  #derivative sent back to output layer
+  
 
 class network:
-  def __init__ (self, layers:list[dict:any], learning_rate:float=1e-7):
-    self.layers = layers
-    self.n_layers = len(self.layers)
-    self.global_learning_rate = learning_rate
-    #print (f"n_layers= {self.n_layers}")
-  def forward_pass(self,input) ->cp.array:
+  def __init__(self, parent_instance):
+    self.parent_model = parent_instance
+  
+
+  
+  def forward_pass(self,input) ->cp.ndarray:
     feed = [input]
-    for i in range(self.n_layers):
-      output = self.layers[i]["layer_obj"].forward(feed[-1])
-      feed.append(output)
-      #print (f"shape of layer output = {output.shape}")
-    self.output = feed [-1]
-    return self.output
+    layer_weights_sum = []
+    for i in range(self.parent_model.n_layers):
+      layer = self.parent_model.model[i]["layer_obj"]
+      feed.append(layer.forward(feed[-1]))
+      #layer_weights_sum.append(float(layer.weights_sum))
+      #output = self.parent_model.model[i]["layer_obj"].forward(feed[-1])
+      #feed.append(output)     #print (f"shape of layer output = {output.shape}")
+      #print(f"sum of weights {self.parent_model.model[i]["layer_obj"].weights_sum}")  
+    #self.total_weights = sum(layer_weights_sum)
+    #print (self.weights_sum)
+    #print(f"sum of pass weights {self.total_weights}")  
+    #self.parent_model.analytics["total_weights"].append(self.total_weights)
 
-  def back_pass(self, loss_gradient:cp.array, y_pred:cp.array, y:cp.array):
-    for i in range (self.n_layers-1,-1,-1):
+    return feed [-1]
+
+  def back_pass(self, loss_gradient:cp.ndarray):
+    network_gradients = cp.array([])
+    for i in range (self.parent_model.n_layers-1,-1,-1):
       #print (f"loss grad type{type(loss_gradient)}")
-      loss_gradient = self.layers[i]["layer_obj"].back_propergation(upstream_gradient=loss_gradient, learning_rate=self.global_learning_rate)
-      
-
+      loss_gradient = self.parent_model.model[i]["layer_obj"].back_propergation(upstream_gradient=loss_gradient)
+      self.parent_model.analytics["layer_gradients"][i].append(float(cp.sum(loss_gradient)))
 
 class model:
   def __init__ (self, model:list[dict:any],
@@ -152,16 +170,37 @@ class model:
                 learning_rate:float=1e-4,
                 output_features:int = 1, 
                 regularisation:str=None, 
-                learning_rate_schedualing:str = "none", 
+                learning_rate_schedualing:str = False, 
                 biases_init:str="rand", Bvals:int=1, 
                 Wvals:int=1,
                 weights_init:str="rand",  
                 lambda_param:float = 0.00001,
                 batch_size:int = 1
                 ):
-    self.model = model
+    self.model = copy.deepcopy(model)
     self.batch_size= batch_size
     self.global_learning_rate = learning_rate
+    self.input_features = input_features
+    self.learning_rate = learning_rate
+    self.output_features = output_features
+    self.regularisation = regularisation
+    self.learning_rate_schedual= learning_rate_schedualing
+    self.biases_init = biases_init
+    self.weights_init = weights_init
+    self.Wvals = Wvals
+    self.Bvals =Bvals
+    self.weights_init = weights_init
+    self.lambda_param = cp.array(lambda_param)
+    self.batch_size = batch_size
+    self.n_layers = len(self.model)
+    self.analytics={}
+    self.analytics["MSE"]=[]
+    self.analytics["total_weights"]=[]
+    self.analytics["layer_gradients"]={}
+    for i in range(self.n_layers):
+      self.analytics["layer_gradients"][i]=[]
+
+
     
     for i, layer in enumerate (self.model):
       if i == 0:
@@ -169,13 +208,13 @@ class model:
         layer_n = layer["hidden_features"]
         stage = "input"
       elif i == len(model)-1:
-          layer_m = layer["hidden_features"]
+          layer_m = self.model[i-1]["hidden_features"]
           layer_n = output_features
           ouput_type = layer.get("n_layer", "regressor")
           stage = "output"
       else:
-        layer_m = layer["hidden_features"]
-        layer_n = model[i-1]["hidden_features"]
+        layer_n = layer["hidden_features"]
+        layer_m = self.model[i-1]["hidden_features"]
         stage = "hidden"
       activation_function = layer["activation_function"]
       
@@ -183,41 +222,84 @@ class model:
       #type = layer.get("type", None)
       for t in range(p):
 
-        layer["layer_obj"] = network_layer (
+        layer["layer_obj"] = network_layer (self,
                                     m=layer_m, n=layer_n, 
-                                    regularisation=regularisation, 
-                                    biases_init=biases_init,Bvals=Bvals, 
-                                    Wvals=Wvals, weights_init=weights_init,
-                                    activation=activation_function, lambda_param=lambda_param,
+                                    activation=activation_function, 
                                     stage=stage
-
                                     )
     if ouput_type == "regressor":
-      self.loss_function = regressor(n_layers=len(self.model), batch_size=self.batch_size, layers_dict=model, regularisation=regularisation)
-    self.network = network(layers=self.model, learning_rate=self.global_learning_rate)
+      self.loss_function = loss_function(self)
+    self.network = network(self)
     print (f"model: {self.model}")
-  
+
+    if self.learning_rate_schedual == "decay": 
+      self.learning = self.decay
+    elif self.learning_rate_schedual == "inverse_decay":
+      self.learning = self.inverse_decay
+    else:
+      self.learning = self.std
+    
+    
+  def decay(self, current_epoch:int, total_epochs:int):
+      if self.learning_rate > self.global_learning_rate/10:
+        percentage_remaining = 1-(current_epoch/total_epochs)
+        self.learning_rate = (self.global_learning_rate*percentage_remaining)+(self.global_learning_rate/100)
+        #print (f"learning rate = {self.learning_rate}")
+        #print(f"decay {self.learning_rate}")
+  def inverse_decay(self, current_epoch:int, total_epochs:int):
+      if self.learning_rate < 4e-5:
+        percentage_remaining = 1-(current_epoch/total_epochs)
+        self.learning_rate = (self.global_learning_rate/percentage_remaining)
+        #print(f"inverse {self.learning_rate}")
+  def std (self, current_epoch:int, total_epochs:int)->None:
+    return
   
   def train (self, x:cp.array, y:cp.array, epochs):
     rows,_=x.shape
     x = cp.asarray(x)
     y = cp.asarray(y)
     for epoch in range (epochs):
+      self.sum_abselute_error = 0
       for i in range(0, rows, self.batch_size):
         y_pred = self.network.forward_pass(input=x[i:i+(self.batch_size)])
-        loss = self.loss_function.loss(y=y[i:i+(self.batch_size)], y_pred=y_pred)
-        mse = self.network.back_pass (loss_gradient=loss, y_pred=y_pred,y=y[i:i+(self.batch_size)])
+        loss = self.loss_function.mean_squared(y=y[i:i+(self.batch_size)], y_pred=y_pred)
+        self.network.back_pass (loss_gradient=loss)
+      self.analytics["MSE"].append(float(self.sum_abselute_error/rows))
+      self.learning(current_epoch=epoch, total_epochs=epochs)
 
+
+      
+
+
+  def predict(self, x):
+    feed_out = cp.asarray(x)
+    for i in range(self.n_layers):
+      feed_out = self.model[i]["layer_obj"].forward(feed_out)
+    return feed_out   
+
+
+
+
+
+
+  def total_weights (self):
+    return (self.analytics["total_weights"])
+
+
+
+  def MSE (self):
+    return (self.analytics["MSE"])
+  def gradients (self):
+    return (self.analytics["gradients"])
+  def model_analytics (self):
+    return (self.analytics)
 
 
     
-if __name__=="__main__":
-  dict = [{"activation_function":"RelU", "hidden_features":12},
-          {"activation_function":"RelU", "hidden_features":12},
-          {"activation_function":"RelU", "hidden_features":1},
-          ]
 
-  nn =model(model = dict, input_features=8, output_features=1 )
+
+
+
 
 
 
