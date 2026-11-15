@@ -21,7 +21,7 @@ learning_rate=1e-2
 regularisation=None
 batch_size=32
 lambda_param = 0.001
-epochs = 30
+epochs = 10
 file_path = "model_analytics.csv"
 dict = [{"activation_function":"GELU", "hidden_features":32},
         {"activation_function":"GELU", "hidden_features":32},
@@ -130,6 +130,7 @@ for i in range (rows_test):
   test_pred = pipeline.predict (X_test_scaled[i:i+1])
   #print (f" predicted test y: {test_pred} label: {Y_test[i]}")
   test_prediction.append(float(test_pred[0,0]))
+  print(f"test Y true = {Y_test_scaled[i:i+1]}, prediction = {test_pred}")
 rows,_=X_train_scaled.shape
 train_prediction = []
 for i in range (rows_train):
@@ -190,11 +191,10 @@ axes[-1].remove()
 axes[3] = fig.add_subplot(1, 4, 4, projection='3d')
 
 gradient_analytics= analytics["layer_gradients"]
-
-print (gradient_analytics.keys())
 for key, z_data in gradient_analytics.items():
-  x_indeces = range(len(z_data))  
+  x_indeces = range(len(z_data)) 
   axes[3].plot(
+     
         x_indeces[-100:],
         z_data[-100:],
         zs=key,    # Positioned at Y = 0, 2, and 4
@@ -211,8 +211,8 @@ file = dir/f"{epochs}epochs_{regularisation}_lambda_param_{learning_rate_schedua
 dir.mkdir(parents=True, exist_ok=True)
 plt.savefig(file)
 plt.show()
-with open(f"models_json//model{model_no}.txt", "w") as f:
+with open(f"models//model{model_no}.txt", "w") as f:
     json.dump(dict, f, indent=4)
 file_exists = os.path.isfile(file_path)
-params.to_csv(f"models_json//model_analytics.csv",mode='a',index=False, header=not file_exists)
+params.to_csv(f"models//model_analytics.csv",mode='a',index=False, header=not file_exists)
 #pipeline.dump()

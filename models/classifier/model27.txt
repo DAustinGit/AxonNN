@@ -1,0 +1,30 @@
+[
+    {
+        "activation_function": "ReLU",
+        "hidden_features": 93
+    },
+    {
+        "activation_function": "ReLU",
+        "hidden_features": 40
+    },
+    {
+        "activation_function": "ReLU",
+        "hidden_features": 40
+    },
+    {
+        "activation_function": "ReLU",
+        "hidden_features": 30
+    },
+    {
+        "activation_function": "ReLU",
+        "hidden_features": 20
+    },
+    {
+        "activation_function": "ReLU",
+        "hidden_features": 10
+    },
+    {
+        "activation_function": "sigmoid",
+        "hidden_features": 1
+    }
+]
