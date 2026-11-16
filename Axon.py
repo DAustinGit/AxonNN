@@ -5,6 +5,42 @@ import copy
 from AxonCV import image_processing
 rng = cp.random.default_rng()
 max_itterations = 400
+
+def reLu_forwards(Z)->cp.ndarray:
+  A = cp.maximum(0, Z)
+  return  A
+def relu_backpropergation(Z)->cp.ndarray:
+  return cp.where(Z > 0, 1, 0)
+def tanh_forwards(Z)->cp.ndarray:
+  return cp.tanh(Z)
+def tanh_backpropergation(Z)->cp.ndarray:
+  return  1 - cp.tanh(Z)**2
+def linear_forwards(Z)->cp.ndarray:
+  return Z
+def linear_backpropergation(Z)->cp.ndarray:
+  return  cp.ones_like(Z)
+def GELU_forwards(Z)->cp.ndarray:
+  u = cp.sqrt(2/cp.pi)*(Z+0.044715*(Z**3))
+  u = cp.clip(u, -10.0, 10.0)
+  return 0.5*Z*(1+cp.tanh(u))
+def GELU_backpropergation(Z):
+  u = cp.sqrt(2/cp.pi)*(Z+0.044715*(Z**3))
+  dudx = cp.sqrt(2/cp.pi)*(1+0.134145*Z**2)
+  return 0.5*(1+cp.tanh(u))+(0.5*Z)*((1-cp.tanh(u)**2)*dudx)
+def soft_max(Z):
+  ex = cp.exp(Z-cp.max(Z,axis=1, keepdims=True))
+  return ex/cp.sum(ex,axis=1, keepdims=True)
+def sigmoid_forwards(Z):
+  a = cp.where(
+  Z >= 0,
+  1 / (1 + cp.exp(-Z)),
+  cp.exp(Z) / (1 + cp.exp(Z))
+  )
+  return a
+def sigmoid_backpropergation(Z):
+  return Z*(1-Z)
+
+
 class networkLayer:
   def __init__(self, parent_instance, m:int, n:int, activation:str = "ReLu", stage:str="hidden"):
     self.parent_model = parent_instance 
@@ -35,12 +71,12 @@ class networkLayer:
     self.input = cp.array([[]])
     self.activation = activation
     self.activation_functions = {
-      "ReLU":{"forwards":self.reLu_forwards, "back_propergation":self.relu_backpropergation},
-      "tanh":{"forwards":self.tanh_forwards, "back_propergation":self.tanh_backpropergation},
-      "linear":{"forwards":self.linear_forwards, "back_propergation":self.linear_backpropergation},
-      "GELU":{"forwards":self.GELU_forwards, "back_propergation":self.GELU_backpropergation},
-      "Softmax":{"forwards":self.soft_max, "back_propergation":self.linear_backpropergation},
-      "sigmoid":{"forwards":self.sigmoid, "back_propergation":self.linear_backpropergation}
+      "ReLU":{"forwards": reLu_forwards, "back_propergation":relu_backpropergation},
+      "tanh":{"forwards":tanh_forwards, "back_propergation": tanh_backpropergation},
+      "linear":{"forwards":linear_forwards, "back_propergation":linear_backpropergation},
+      "GELU":{"forwards":GELU_forwards, "back_propergation":GELU_backpropergation},
+      "Softmax":{"forwards":soft_max, "back_propergation":linear_backpropergation},
+      "sigmoid":{"forwards":sigmoid_forwards, "back_propergation":linear_backpropergation}
 
     }
     
@@ -55,39 +91,7 @@ class networkLayer:
     else:
       self.L = 0
       self.regularisation_backwards = self.std_back_prop
-  def reLu_forwards(self,)->cp.ndarray:
-    A = cp.maximum(0, self.linear_output)
-    return  A
-  def relu_backpropergation(self)->cp.ndarray:
-    return cp.where(self.linear_output > 0, 1, 0)
-  def tanh_forwards(self)->cp.ndarray:
-    return cp.tanh(self.linear_output)
-  def tanh_backpropergation(self)->cp.ndarray:
-    return  1 - cp.tanh(self.linear_output)**2
-  def linear_forwards(self)->cp.ndarray:
-    return self.linear_output
-  def linear_backpropergation(self)->cp.ndarray:
-    return  cp.ones_like(self.linear_output)
-  def GELU_forwards(self)->cp.ndarray:
-    u = cp.sqrt(2/cp.pi)*(self.linear_output+0.044715*(self.linear_output**3))
-    u = cp.clip(u, -10.0, 10.0)
-    return 0.5*self.linear_output*(1+cp.tanh(u))
-  def GELU_backpropergation(self):
-    u = cp.sqrt(2/cp.pi)*(self.linear_output+0.044715*(self.linear_output**3))
-    dudx = cp.sqrt(2/cp.pi)*(1+0.134145*self.linear_output**2)
-    return 0.5*(1+cp.tanh(u))+(0.5*self.linear_output)*((1-cp.tanh(u)**2)*dudx)
-  def soft_max(self):
-    ex = cp.exp(self.linear_output-cp.max(self.linear_output,axis=1, keepdims=True))
-    return ex/cp.sum(ex,axis=1, keepdims=True)
-  def sigmoid(self):
-    return cp.where(
-    self.linear_output >= 0,
-    1 / (1 + cp.exp(-self.linear_output)),
-    cp.exp(self.linear_output) / (1 + cp.exp(self.linear_output))
-    )
-  def sigmoid_backpropergation(self):
-    return self.linear_output*(1-self.linear_output)
-
+ 
 
 
 
@@ -98,7 +102,7 @@ class networkLayer:
     self.input = cp.array(input)
     self.linear_output = cp.dot(self.input, self.weights) + self.biases
     #self.weights_sum = cp.sum(cp.abs(self.weights))                                              
-    return self.activation_func()
+    return self.activation_func(self.linear_output)
   
   def L2_back_prop(self):
     return self.dW_base + 2*(self.parent_model.lambda_param*self.weights)
@@ -108,7 +112,7 @@ class networkLayer:
     return self.dW_base
   
   def back_propergation (self, upstream_gradient:cp.ndarray)->cp.ndarray:
-    self.deriv = self.activation_deriv()
+    self.deriv = self.activation_deriv(self.linear_output)
     self.delta = upstream_gradient * self.deriv 
     self.dW_base = cp.dot(self.input.T, self.delta)
     dW_total = self.regularisation_backwards()
@@ -151,23 +155,31 @@ class loss_function:
   def mean_squared(self, y:cp.ndarray, y_pred:cp.ndarray):
     y = cp.asarray(y)
     m,_ = y.shape
-    self.loss_gradient = 2*(y_pred-y)/m
-    self.parent_model.sum_abselute_error += cp.sum((y_pred-y)**2)
-    return self.loss_gradient
+    loss_gradient = 2*(y_pred-y)/m
+    error = cp.sum((y_pred-y)**2)/m
+    return loss_gradient, error
 
   def binary_cross_entropy(self, y:cp.ndarray, y_pred:cp.ndarray):
     m,_ = y.shape
     epsilon = 1e-7
     y_pred = cp.clip(y_pred, epsilon, 1.0 - epsilon)
-    bce_loss = -(y* cp.log(y_pred)+(1-y)*cp.log(1-y_pred))
-    return ((y_pred - y) / m) #derivative sent back to output layer
+    error = -(y* cp.log(y_pred)+(1-y)*cp.log(1-y_pred))
+    return ((y_pred - y) / m), cp.mean(error) #derivative sent back to output layer
+  
+  def BCE_withlogits(self, y:cp.ndarray, y_pred:cp.ndarray):
+    m,_ = y.shape
+    probs = sigmoid_forwards(y_pred)
+    error = cp.maximum(y_pred,0)-y_pred*y+cp.log1p(cp.exp(-cp.abs(y_pred)))
+    loss_gradient = (probs-y)/m
+    return loss_gradient, cp.mean(error)
+                                                
 
   def multiclass_cross_entropy (self, y:cp.ndarray, y_pred:cp.ndarray):
     m,_ = y.shape
     epsilon = 1e-15
     y_pred = cp.clip(y_pred, epsilon, 1.0 - epsilon)
-    mce_loss = -(cp.sum(y*cp.log(y_pred), axis=1))
-    return (y_pred-y)/m  #derivative sent back to output layer
+    error = -(cp.sum(y*cp.log(y_pred), axis=1))
+    return (y_pred - y)/m, cp.mean(error) #derivative sent back to output layer
   
 
 class network:
@@ -225,7 +237,7 @@ class model:
     self.batch_size = batch_size
     self.n_layers = len(self.model)
     self.analytics={}
-    self.analytics["MSE"]=[]
+    self.analytics["batch error"]=[]
     self.analytics["total_weights"]=[]
     self.analytics["layer_gradients"]={}
     for i in range(self.n_layers):
@@ -243,12 +255,14 @@ class model:
           layer_n = output_features
           output_type = layer.get("n_layer", "regressor")
           stage = "output"
+          if self.loss_type == "BCEwithlogits":
+            layer["activation_function"] = "linear"
       else:
         layer_n = layer["hidden_features"]
         layer_m = self.model[i-1]["hidden_features"]
         stage = "hidden"
       activation_function = layer["activation_function"]
-      
+    
       p = layer.get("n_layer", 1)
       type = layer.get("type", None)
       for t in range(p):
@@ -282,8 +296,10 @@ class model:
       self.loss =  self.loss_function.binary_cross_entropy
     elif loss_type == "MCE":
       self.loss =  self.loss_function.multiclass_cross_entropy
+    elif loss_type == "BCEwithlogits":
+      self.loss =  self.loss_function.BCE_withlogits
 
-    print (f"loss {self.loss}")
+
 
 
     
@@ -309,22 +325,24 @@ class model:
       self.sum_abselute_error = 0
       for i in range(0, rows, self.batch_size):
         y_pred = self.network.forward_pass(input=x[i:i+(self.batch_size)])
-        loss = self.loss(y=y[i:i+(self.batch_size)], y_pred=y_pred)
+        loss,mean_error = self.loss(y=y[i:i+(self.batch_size)], y_pred=y_pred)
         self.network.back_pass (loss_gradient=loss)
-      self.analytics["MSE"].append(float(self.sum_abselute_error/rows))
+      self.analytics["batch error"].append(float(mean_error))
       self.learning(current_epoch=epoch, total_epochs=epochs)
-  def predict(self, x):
+ 
+  def predict(self, x, output_activation:str = None):
     feed_out = cp.asarray(x)
-    
     for i in range(self.n_layers):
       feed_out = self.model[i]["layer_obj"].forward(feed_out)
-    
-    return feed_out  
+    if output_activation == "sigmoid":
+      return sigmoid_forwards(feed_out[-1])
+    else:
+      return feed_out[-1] 
   def total_weights (self):
     return (self.analytics["total_weights"])
 
-  def MSE (self):
-    return (self.analytics["MSE"])
+  def training_error (self):
+    return (self.analytics["batch error"])
   def gradients (self):
     return (self.analytics["layer_gradients"])
   def model_analytics (self):

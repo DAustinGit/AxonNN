@@ -12,7 +12,7 @@
         "hidden_features": 10
     },
     {
-        "activation_function": "sigmoid",
+        "activation_function": "linear",
         "hidden_features": 1
     }
 ]

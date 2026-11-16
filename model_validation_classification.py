@@ -15,23 +15,23 @@ test_prediction = []
 #*******************model peramerters***************************************
 threshold = 0.4
 data_path = "Bankrupcy"
-learning_rate_schedualing = "decay"
+learning_rate_schedualing = None
 Bvals = 0.0
 biases_init = "fill" 
 weights_init = "He"  
 input_features=93
 output_features=1 
-learning_rate=2e-3
+learning_rate=5e-3
 regularisation=None
 batch_size=32
 lambda_param = 0.001
-loss_type = "BCE"
-epochs = 150
-file_path = "models//classifier//"
+loss_type = "BCEwithlogits"
+epochs = 1500
+file_path = "models/classifier/"
 dict = [{"activation_function":"ReLU", "hidden_features":93},
         {"activation_function":"ReLU", "hidden_features":20},
         {"activation_function":"ReLU", "hidden_features":10},
-        {"activation_function":"sigmoid", "hidden_features":1}
+        {"activation_function":"linear", "hidden_features":1}
         ]
 #*************************************************************
 
@@ -141,10 +141,10 @@ def prediction(x: np.ndarray, threshold: float, model=pipeline):
     scores = []
     rows,_ = x.shape
     for i in range (rows):
-        preds = model.predict(x[i:i+1]).get()
+        preds = model.predict(x[i:i+1], output_activation="sigmoid").get()
         binary = (preds > threshold).astype(int)
         predictions.append(binary)
-        scores.append(float(preds[0,0]))
+        scores.append(float(preds[0]))
     #print(scores)
     return np.array(predictions), np.array(scores)
    
@@ -187,14 +187,17 @@ report["baseline"] = baseline
 
 
 fig, axes = plt.subplots(nrows=1, ncols=4, figsize=(20, 20))
-MSE = pipeline.MSE()
+training_error = pipeline.training_error()
 total_weights = pipeline.total_weights()
 analytics = pipeline.model_analytics()
-axes[0].plot(MSE, marker='o', color='purple')
-axes[0].set_title("Mean Squared Error by Epoch")
-axes[0].set_xlabel("Epochs")
-axes[0].set_ylabel("MSE")
+axes[0].plot(training_error, marker='o', color='purple')
+axes[0].set_title("Binary Cross Entropy by batch")
+axes[0].set_xlabel("batches")
+axes[0].set_ylabel("BCE")
 axes[0].grid(True)
+axes[1].set_title("Test confusion matrix")
+axes[2].set_title("Train confusion matrix")
+
 disp1.plot(ax=axes[1], cmap="Blues", values_format="d")
 disp2.plot(ax=axes[2], cmap="Greens", values_format="d")
 axes[-1].remove()
@@ -218,21 +221,22 @@ axes[2].set_ylabel('Layer')
 #axes[2].plot(gradient_analytics[7][-100:], marker='o', color='purple'
 with open(f"{file_path}//model{model_no}.txt", "w") as f:
     json.dump(dict, f, indent=4)
-
 df = pd.read_csv(file_path+"model_parameters.csv")
 last_row_index = df["index"].iloc[-1]
 print(last_row_index)
 new_index = int(last_row_index)+1
+
+#new_index = 0
+params["index"] = new_index
 dir = Path(f"{file_path}model{model_no}/{data_path}")
 dir.mkdir(parents=True, exist_ok=True)    
-
 file = dir/f"{model_no} {new_index}.png"       
 file_exists = os.path.isfile(file_path+"model_parameters.csv")
-file_exists = os.path.isfile(file_path+"model_analytics.csv")
+#file_exists = os.path.isfile(file_path+"model_analytics.csv")
 plt.savefig(file)
 plt.show()
 
-df_report.to_csv(f"models//classifier//model_analytics_run_{new_index}.csv",mode='a',index=True, header=not file_exists)
-params.to_csv(f"models//classifier//model_parameters.csv",mode='a',index=True, header=not file_exists)
+df_report.to_csv(f"models//classifier//model_analytics_run_{new_index}.csv",mode='a',index=True, header=True,)
+params.to_csv(file_path+"model_parameters.csv",mode='a',index=True,  header=not file_exists)
 
 #pipeline.dump()
