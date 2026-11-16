@@ -1,0 +1,5 @@
+,learning rate schedualing,Bvals,weights init,biases init,input features,learning rate,regularisation,batch_size,lambda,model no,epochs,data,R2 train,R2 test,MSE test,MSE train,delta MSE,delta R2,loss_type,threshold,index
+0,,0.0,He,fill,93,0.005,,32,0.001,28,40,Bankrupcy,0,0,0,0,0,0,BCEwithlogits,0.4,0
+0,,0.0,He,fill,93,0.005,,32,0.001,28,80,Bankrupcy,0,0,0,0,0,0,BCEwithlogits,0.4,1
+0,,0.0,He,fill,93,0.005,,32,0.001,28,400,Bankrupcy,0,0,0,0,0,0,BCEwithlogits,0.4,2
+0,,0.0,He,fill,93,0.005,,32,0.001,28,1500,Bankrupcy,0,0,0,0,0,0,BCEwithlogits,0.4,3

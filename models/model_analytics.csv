@@ -96,3 +96,55 @@ decay,0.2,He,fill,13,0.01,,32,0.001,26,100,curated-solubility-dataset,0.79596085
 decay,0.2,He,fill,13,0.01,,32,0.001,26,300,curated-solubility-dataset,0.8453268666985073,0.7286850437746961,0.2869200547374506,0.15467313330149268,-0.1322469214359579,-0.1322469214359579
 decay,0.2,He,fill,13,0.01,,32,0.001,26,3,curated-solubility-dataset,0.6842748103318543,0.7128160780399775,0.3037017485319172,0.31572518966814556,0.01202344113622833,0.01202344113622833
 decay,0.2,He,fill,13,0.01,,32,0.001,26,30,curated-solubility-dataset,0.7551951725561176,0.7447266954229648,0.26995574273255596,0.24480482744388243,-0.025150915288673525,-0.025150915288673525
+learning rate schedualing,Bvals,weights init,biases init,input features,learning rate,regularisation,batch_size,lambda,model no,epochs,data,R2 train,R2 test,MSE test,MSE train,delta MSE,delta R2
+decay,0.2,He,fill,13,0.01,,32,0.001,26,10,curated-solubility-dataset,0.4232923858717854,0.49247237180144066,0.5367188631598112,0.5767076141282146,0.039988750968403375,0.039988750968403375
+learning rate schedualing,Bvals,weights init,biases init,input features,learning rate,regularisation,batch_size,lambda,model no,epochs,data,R2 train,R2 test,MSE test,MSE train,delta MSE,delta R2
+decay,0.2,He,fill,13,0.01,,32,0.001,26,10,curated-solubility-dataset,0.5194713083995253,0.5748807325180887,0.4495706583700635,0.48052869160047473,0.03095803323041124,0.03095803323041124
+learning rate schedualing,Bvals,weights init,biases init,input features,learning rate,regularisation,batch_size,lambda,model no,epochs,data,R2 train,R2 test,MSE test,MSE train,delta MSE,delta R2
+decay,0.2,He,fill,13,0.01,,32,0.001,26,10,curated-solubility-dataset,0.5398255436368502,0.5847251822167815,0.439159989950946,0.4601744563631497,0.02101446641220367,0.02101446641220367
+learning rate schedualing,Bvals,weights init,biases init,input features,learning rate,regularisation,batch_size,lambda,model no,epochs,data,R2 train,R2 test,MSE test,MSE train,delta MSE,delta R2
+decay,0.2,He,fill,13,0.01,,32,0.001,26,10,curated-solubility-dataset,0.3743410589344396,0.4098217965317478,0.6241232138465073,0.6256589410655604,0.0015357272190531512,0.0015357272190531512
+learning rate schedualing,Bvals,weights init,biases init,input features,learning rate,regularisation,batch_size,lambda,model no,epochs,data,R2 train,R2 test,MSE test,MSE train,delta MSE,delta R2
+decay,0.2,He,fill,13,0.01,,32,0.001,26,10,curated-solubility-dataset,0.5369505144303396,0.5505488509222922,0.47530202569481106,0.46304948556966036,-0.012252540125150702,-0.012252540125150702
+learning rate schedualing,Bvals,weights init,biases init,input features,learning rate,regularisation,batch_size,lambda,model no,epochs,data,R2 train,R2 test,MSE test,MSE train,delta MSE,delta R2
+decay,0.2,He,fill,13,0.01,,32,0.001,26,10,curated-solubility-dataset,0.4537728732146391,0.49407765166873385,0.5350212531430224,0.5462271267853608,0.011205873642338382,0.011205873642338382
+learning rate schedualing,Bvals,weights init,biases init,input features,learning rate,regularisation,batch_size,lambda,model no,epochs,data,R2 train,R2 test,MSE test,MSE train,delta MSE,delta R2
+decay,0.2,He,fill,13,0.01,,32,0.001,26,10,curated-solubility-dataset,0.4493148943041553,0.46869487206762794,0.5618639624940328,0.5506851056958447,-0.011178856798188086,-0.011178856798188086
+learning rate schedualing,Bvals,weights init,biases init,input features,learning rate,regularisation,batch_size,lambda,model no,epochs,data,R2 train,R2 test,MSE test,MSE train,delta MSE,delta R2
+decay,0.2,He,fill,13,0.01,,32,0.001,26,10,curated-solubility-dataset,0.7178139629441354,0.726262811306211,0.28948160564534603,0.28218603705586454,-0.007295568589481494,-0.007295568589481494
+learning rate schedualing,Bvals,weights init,biases init,input features,learning rate,regularisation,batch_size,lambda,model no,epochs,data,R2 train,R2 test,MSE test,MSE train,delta MSE,delta R2,loss_type
+decay,0.2,He,fill,93,0.01,,32,0.001,26,1,Bankrupcy,,,,,,,BCE
+learning rate schedualing,Bvals,weights init,biases init,input features,learning rate,regularisation,batch_size,lambda,model no,epochs,data,R2 train,R2 test,MSE test,MSE train,delta MSE,delta R2,loss_type
+decay,0.2,He,fill,93,0.01,,32,0.001,26,1,Bankrupcy,,,,,,,BCE
+learning rate schedualing,Bvals,weights init,biases init,input features,learning rate,regularisation,batch_size,lambda,model no,epochs,data,R2 train,R2 test,MSE test,MSE train,delta MSE,delta R2,loss_type
+decay,0.2,He,fill,93,1e-05,,32,0.001,26,1,Bankrupcy,,,,,,,BCE
+learning rate schedualing,Bvals,weights init,biases init,input features,learning rate,regularisation,batch_size,lambda,model no,epochs,data,R2 train,R2 test,MSE test,MSE train,delta MSE,delta R2,loss_type
+decay,0.2,He,fill,93,1e-05,,32,0.001,26,1,Bankrupcy,,,,,,,BCE
+learning rate schedualing,Bvals,weights init,biases init,input features,learning rate,regularisation,batch_size,lambda,model no,epochs,data,R2 train,R2 test,MSE test,MSE train,delta MSE,delta R2,loss_type
+decay,0.2,He,fill,93,1e-05,,32,0.001,26,1,Bankrupcy,,,,,,,BCE
+learning rate schedualing,Bvals,weights init,biases init,input features,learning rate,regularisation,batch_size,lambda,model no,epochs,data,R2 train,R2 test,MSE test,MSE train,delta MSE,delta R2
+decay,0.2,He,fill,13,0.01,,32,0.001,26,10,curated-solubility-dataset,0.7234223803408855,0.7316218929764735,0.283814288120479,0.2765776196591145,-0.007236668461364504,-0.007236668461364504
+learning rate schedualing,Bvals,weights init,biases init,input features,learning rate,regularisation,batch_size,lambda,model no,epochs,data,R2 train,R2 test,MSE test,MSE train,delta MSE,delta R2
+decay,0.2,He,fill,13,0.01,,32,0.001,26,10,curated-solubility-dataset,0.7016935676674747,0.7209480184760555,0.29510208698910245,0.2983064323325252,0.003204345343422732,0.003204345343422732
+learning rate schedualing,Bvals,weights init,biases init,input features,learning rate,regularisation,batch_size,lambda,model no,epochs,data,R2 train,R2 test,MSE test,MSE train,delta MSE,delta R2
+decay,0.2,He,fill,13,0.01,,32,0.001,26,10,curated-solubility-dataset,0.7100193062103429,0.7294129540235339,0.2861502776070402,0.2899806937896571,0.0038304161826168692,0.0038304161826168692
+learning rate schedualing,Bvals,weights init,biases init,input features,learning rate,regularisation,batch_size,lambda,model no,epochs,data,R2 train,R2 test,MSE test,MSE train,delta MSE,delta R2
+decay,0.2,He,fill,13,0.01,,32,0.001,26,10,curated-solubility-dataset,0.7202575919912306,0.722074866250116,0.29391042682590196,0.27974240800876937,-0.014168018817132588,-0.014168018817132588
+learning rate schedualing,Bvals,weights init,biases init,input features,learning rate,regularisation,batch_size,lambda,model no,epochs,data,R2 train,R2 test,MSE test,MSE train,delta MSE,delta R2,loss_type
+decay,0.2,He,fill,93,1e-07,,32,0.001,26,1,Bankrupcy,-1.0000000000000009,-0.8943226537545228,2.0523614803566135,2.0,-0.05236148035661348,-0.05236148035661348,BCE
+learning rate schedualing,Bvals,weights init,biases init,input features,learning rate,regularisation,batch_size,lambda,model no,epochs,data,R2 train,R2 test,MSE test,MSE train,delta MSE,delta R2,loss_type
+decay,0.2,He,fill,93,1e-07,,32,0.001,26,1,Bankrupcy,,,,,,,BCE
+learning rate schedualing,Bvals,weights init,biases init,input features,learning rate,regularisation,batch_size,lambda,model no,epochs,data,R2 train,R2 test,MSE test,MSE train,delta MSE,delta R2,loss_type
+decay,0.2,He,fill,93,1e-07,,32,0.001,26,1,Bankrupcy,-1.0000000000000009,-0.8943226537545228,2.0523614803566135,2.0,-0.05236148035661348,-0.05236148035661348,BCE
+learning rate schedualing,Bvals,weights init,biases init,input features,learning rate,regularisation,batch_size,lambda,model no,epochs,data,R2 train,R2 test,MSE test,MSE train,delta MSE,delta R2,loss_type
+decay,0.2,He,fill,93,1e-07,,32,0.001,26,10,Bankrupcy,,,,,,,BCE
+learning rate schedualing,Bvals,weights init,biases init,input features,learning rate,regularisation,batch_size,lambda,model no,epochs,data,R2 train,R2 test,MSE test,MSE train,delta MSE,delta R2,loss_type
+decay,0.2,He,fill,93,1e-09,,32,0.001,26,10,Bankrupcy,,,,,,,BCE
+learning rate schedualing,Bvals,weights init,biases init,input features,learning rate,regularisation,batch_size,lambda,model no,epochs,data,R2 train,R2 test,MSE test,MSE train,delta MSE,delta R2,loss_type
+decay,0.2,He,fill,93,1e-09,,32,0.001,26,10,Bankrupcy,,,,,,,BCE
+learning rate schedualing,Bvals,weights init,biases init,input features,learning rate,regularisation,batch_size,lambda,model no,epochs,data,R2 train,R2 test,MSE test,MSE train,delta MSE,delta R2,loss_type
+decay,0.2,He,fill,93,1e-09,,32,0.001,26,10,Bankrupcy,,,,,,,BCE
+learning rate schedualing,Bvals,weights init,biases init,input features,learning rate,regularisation,batch_size,lambda,model no,epochs,data,R2 train,R2 test,MSE test,MSE train,delta MSE,delta R2,loss_type
+decay,0.2,He,fill,93,1e-09,,32,0.001,26,10,Bankrupcy,,,,,,,BCE
+learning rate schedualing,Bvals,weights init,biases init,input features,learning rate,regularisation,batch_size,lambda,model no,epochs,data,R2 train,R2 test,MSE test,MSE train,delta MSE,delta R2
+decay,0.2,He,fill,13,0.01,,32,0.001,26,10,curated-solubility-dataset,0.707360076000604,0.7214173183210507,0.2946057946391058,0.292639923999396,-0.0019658706397098213,-0.0019658706397098213
